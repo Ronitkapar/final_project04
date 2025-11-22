@@ -5,8 +5,9 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY") or os.getenv("GEMINI_API_KEY")
 if GOOGLE_API_KEY:
+    GOOGLE_API_KEY = GOOGLE_API_KEY.strip()
     genai.configure(api_key=GOOGLE_API_KEY)
 
 def generate_script(text_content, model_name='gemini-1.5-flash'):

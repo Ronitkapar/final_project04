@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
+if PEXELS_API_KEY:
+    PEXELS_API_KEY = PEXELS_API_KEY.strip()
 PEXELS_API_URL = "https://api.pexels.com/videos/search"
 
 async def generate_audio(text, output_filename, voice="en-US-ChristopherNeural"):
