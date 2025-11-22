@@ -57,8 +57,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def main():
-    st.title("🎬 AI Video Storyteller")
-    st.markdown("### Turn your documents into cinematic video essays.")
+    st.title("🎬 AI Video Storyteller (Stock Footage Edition)")
+    st.markdown("### Turn your documents into cinematic video essays with Stock Footage.")
 
     # Sidebar for Configuration
     with st.sidebar:
@@ -75,7 +75,7 @@ def main():
         selected_model = st.selectbox("Select Gemini Model", model_options, index=0)
         
         st.divider()
-        st.info("API Keys are loaded securely from environment variables.")
+        st.info("API Keys (Google & Pexels) are loaded from environment variables.")
 
     # Main Content Area
     uploaded_file = st.file_uploader("Upload a PDF or Text file", type=["pdf", "txt"])
@@ -84,8 +84,8 @@ def main():
         st.success("File uploaded successfully!")
         
         if st.button("Generate Video", type="primary"):
-            if not os.getenv("GOOGLE_API_KEY") or not os.getenv("HF_API_TOKEN"):
-                st.error("Missing API Keys in .env file.")
+            if not os.getenv("GOOGLE_API_KEY") or not os.getenv("PEXELS_API_KEY"):
+                st.error("Missing API Keys in .env file (GOOGLE_API_KEY or PEXELS_API_KEY).")
                 return
 
             # Create a temporary directory for processing
@@ -118,64 +118,47 @@ def main():
                     st.json(script_data)
                 progress_bar.progress(30)
 
-                # Phase 3: Generate Assets (Smart Generation)
-                status_text.markdown("**Phase 3: Generating Audio and Visuals...**")
+                # Phase 3: Generate Assets (Audio & Stock Video)
+                status_text.markdown("**Phase 3: Fetching Stock Footage & Generating Audio...**")
                 audio_files = []
-                image_files = []
-                generated_images_pool = [] # Store paths of actually generated images
+                video_files = []
+                text_scripts = []
                 
                 total_scenes = len(script_data)
                 for i, scene in enumerate(script_data):
                     scene_id = scene.get("scene_id", i+1)
                     status_text.text(f"Processing Scene {scene_id}/{total_scenes}...")
                     
-                    # Audio (Always generate)
+                    # Store text for subtitles
+                    text_scripts.append(scene["text"])
+
+                    # Audio
                     audio_path = os.path.join(temp_dir, f"audio_{scene_id}.mp3")
                     asyncio.run(media_gen.generate_audio(scene["text"], audio_path))
                     audio_files.append(audio_path)
                     
-                    # Image (Smart Reuse Logic)
-                    # Logic: 70% chance to generate new, 30% chance to reuse (if pool has images)
-                    # Always generate for the first scene
-                    should_generate_new = True
-                    if i > 0 and generated_images_pool:
-                        if random.random() > 0.7: # 30% chance to reuse
-                            should_generate_new = False
+                    # Stock Video (Pexels)
+                    video_path = os.path.join(temp_dir, f"video_{scene_id}.mp4")
+                    query = scene.get("stock_video_query", "abstract background")
                     
-                    image_path = os.path.join(temp_dir, f"image_{scene_id}.png")
+                    success, error_msg = media_gen.download_pexels_video(query, video_path)
+                    if not success:
+                        st.warning(f"Scene {scene_id}: {error_msg}. Using fallback.")
+                        # Video editor handles missing files as black screen, 
+                        # but we could also download a default fallback here if we wanted.
                     
-                    if should_generate_new:
-                        success, error_msg = media_gen.generate_image(scene["image_prompt"], image_path)
-                        if not success:
-                            st.warning(f"Failed to generate image for Scene {scene_id}: {error_msg}. Trying to reuse previous image...")
-                            if generated_images_pool:
-                                # Fallback to reuse if generation fails
-                                import shutil
-                                reuse_src = random.choice(generated_images_pool)
-                                shutil.copy(reuse_src, image_path)
-                                image_files.append(image_path)
-                            else:
-                                st.error("Critical: Image generation failed and no images to reuse.")
-                                return
-                        else:
-                            image_files.append(image_path)
-                            generated_images_pool.append(image_path)
-                    else:
-                        # Reuse an existing image
-                        import shutil
-                        reuse_src = random.choice(generated_images_pool)
-                        shutil.copy(reuse_src, image_path)
-                        image_files.append(image_path)
-                        status_text.text(f"Reusing visual asset for Scene {scene_id}...")
+                    video_files.append(video_path)
                     
                     # Update progress based on scenes
                     current_progress = 30 + int((i + 1) / total_scenes * 40)
                     progress_bar.progress(current_progress)
 
                 # Phase 4: Assemble Video
-                status_text.markdown("**Phase 4: Assembling Video (Cinematic Motion)...**")
+                status_text.markdown("**Phase 4: Assembling Video (Subtitles & Clips)...**")
                 output_video_path = "final_output.mp4"
-                result, error = video_editor.create_video(audio_files, image_files, output_video_path)
+                
+                # Note: Updated video_editor.create_video signature
+                result, error = video_editor.create_video(audio_files, video_files, text_scripts, output_video_path)
                 
                 if error:
                     st.error(f"Failed to assemble video: {error}")
@@ -190,7 +173,7 @@ def main():
                         st.download_button(
                             label="Download Video",
                             data=file,
-                            file_name="ai_video_essay.mp4",
+                            file_name="ai_stock_video.mp4",
                             mime="video/mp4"
                         )
 

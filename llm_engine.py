@@ -38,7 +38,7 @@ def generate_script(text_content, model_name='gemini-1.5-flash'):
     Each scene in the list should be a dictionary with the following keys:
     - "scene_id": Integer, sequential starting from 1.
     - "text": String, the narration script for this scene. Keep it engaging and concise.
-    - "image_prompt": String, a detailed visual description for an AI image generator (Stable Diffusion). **Describe a wide-angle, cinematic landscape shot.**
+    - "stock_video_query": String, a concise 1-3 word search query to find a relevant stock video on Pexels (e.g., "ocean waves", "corporate meeting", "forest drone").
     - "duration_estimate": Integer, estimated duration in seconds (aim for 5-10).
     
     Text to analyze:

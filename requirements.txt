@@ -6,3 +6,5 @@ moviepy<2.0
 python-dotenv
 pypdf2
 huggingface_hub
+requests
+edge-tts
