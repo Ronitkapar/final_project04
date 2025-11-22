@@ -102,6 +102,9 @@ def create_video(audio_paths, video_paths, text_scripts, output_path):
                 return None, f"Error processing scene {i+1}: {str(e)}"
         
         # Concatenate all clips
+        if not clips:
+            return None, "No valid scenes to assemble. All scenes were skipped or failed."
+
         final_video = concatenate_videoclips(clips, method="compose")
         final_video.write_videofile(output_path, fps=24, codec="libx264", audio_codec="aac")
         
