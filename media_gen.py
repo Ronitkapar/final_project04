@@ -24,8 +24,16 @@ async def generate_audio(text, output_filename, voice="en-US-ChristopherNeural")
     try:
         communicate = edge_tts.Communicate(text, voice)
         await communicate.save(output_filename)
+        
+        # Verify file exists and is not empty
+        if not os.path.exists(output_filename) or os.path.getsize(output_filename) == 0:
+            raise ValueError(f"Audio file generation failed: {output_filename} is missing or empty.")
+            
     except Exception as e:
         print(f"Error generating audio: {e}")
+        # Ensure we don't leave a 0-byte file
+        if os.path.exists(output_filename) and os.path.getsize(output_filename) == 0:
+            os.remove(output_filename)
 
 def download_pexels_video(query, output_filename):
     """

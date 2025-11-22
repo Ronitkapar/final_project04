@@ -40,6 +40,10 @@ def create_video(audio_paths, video_paths, text_scripts, output_path):
         for i, (audio_path, video_path, text) in enumerate(zip(audio_paths, video_paths, text_scripts)):
             try:
                 # Load Audio
+                if not os.path.exists(audio_path) or os.path.getsize(audio_path) == 0:
+                     print(f"Skipping scene {i+1}: Invalid audio file {audio_path}")
+                     continue
+
                 audio_clip = AudioFileClip(audio_path)
                 duration = audio_clip.duration
                 
