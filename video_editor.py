@@ -1,5 +1,11 @@
 import os
 import textwrap
+import PIL.Image
+
+# Monkey-patch ANTIALIAS for Pillow 10+ compatibility
+if not hasattr(PIL.Image, 'ANTIALIAS'):
+    PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
+
 from moviepy.editor import (
     AudioFileClip,
     VideoFileClip,
